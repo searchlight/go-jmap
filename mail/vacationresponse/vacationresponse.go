@@ -60,5 +60,6 @@ func (v *VacationResponse) MarshalJson() ([]byte, error) {
 		utc := v.ToDate.UTC()
 		v.ToDate = &utc
 	}
-	return json.Marshal(v)
+	type Alias VacationResponse
+	return json.Marshal((*Alias)(v))
 }
