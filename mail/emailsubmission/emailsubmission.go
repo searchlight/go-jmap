@@ -89,6 +89,16 @@ type EmailSubmission struct {
 	MDNBlobIDs []jmap.ID `json:"mdnBlobIds,omitempty"`
 }
 
+func (s *EmailSubmission) MarshalJSON() ([]byte, error) {
+	if s.SendAt != nil && s.SendAt.Location() != time.UTC {
+		utc := s.SendAt.UTC()
+		s.SendAt = &utc
+	}
+	// create a type alias to avoid infinite recursion
+	type Alias EmailSubmission
+	return json.Marshal((*Alias)(s))
+}
+
 type Envelope struct {
 	// The email address to use as the return address in the SMTP submission
 	MailFrom *Address `json:"mailfrom,omitempty"`

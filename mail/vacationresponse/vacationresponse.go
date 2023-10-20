@@ -1,6 +1,7 @@
 package vacationresponse
 
 import (
+	"encoding/json"
 	"time"
 
 	"git.sr.ht/~rockorager/go-jmap"
@@ -48,4 +49,16 @@ type VacationResponse struct {
 
 	// The HTML body to send in the response
 	HTMLBody *string `json:"htmlBody,omitempty"`
+}
+
+func (v *VacationResponse) MarshalJson() ([]byte, error) {
+	if v.FromDate != nil && v.FromDate.Location() != time.UTC {
+		utc := v.FromDate.UTC()
+		v.FromDate = &utc
+	}
+	if v.ToDate != nil && v.ToDate.Location() != time.UTC {
+		utc := v.ToDate.UTC()
+		v.ToDate = &utc
+	}
+	return json.Marshal(v)
 }

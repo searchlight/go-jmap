@@ -1,6 +1,7 @@
 package email
 
 import (
+	"encoding/json"
 	"time"
 
 	"git.sr.ht/~rockorager/go-jmap"
@@ -127,3 +128,17 @@ type FilterCondition struct {
 }
 
 func (fc *FilterCondition) implementsFilter() {}
+
+func (fc *FilterCondition) MarshalJSON() ([]byte, error) {
+	if fc.Before != nil && fc.Before.Location() != time.UTC {
+		utc := fc.Before.UTC()
+		fc.Before = &utc
+	}
+	if fc.After != nil && fc.After.Location() != time.UTC {
+		utc := fc.After.UTC()
+		fc.After = &utc
+	}
+	// create a type alias to avoid infinite recursion
+	type Alias FilterCondition
+	return json.Marshal((*Alias)(fc))
+}
