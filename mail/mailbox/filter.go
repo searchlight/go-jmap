@@ -2,27 +2,24 @@ package mailbox
 
 import "git.sr.ht/~rockorager/go-jmap"
 
+// Filter argument for a /query operation (see RFC8620, section 5.5)
 type Filter interface {
 	implementsFilter()
 }
 
-// Determines the set of Mailboxes returned in the results. If null, all
-// objects in the account of this type are included in the results.
+// FilterOperator can be used to create complex filtering (e.g.: return
+// mailboxes which are subscribed and NOT named Inbox)
 type FilterOperator struct {
-	// This MUST be one of the following strings: “AND” / “OR” / “NOT”
+	// jmap.OperatorOR, jmap.OperatorAND or jmap.OperatorNOT
 	Operator jmap.Operator `json:"operator,omitempty"`
 
-	// The conditions to evaluate against each record.
+	// List of nested FilterOperator or FilterCondition.
 	Conditions []Filter `json:"conditions,omitempty"`
 }
 
 func (fo *FilterOperator) implementsFilter() {}
 
-// FilterCondition is an interface that represents FilterCondition
-// objects. A filter condition object can be either a named struct, ie
-// MailboxFilterConditionName, or a MailboxFilter itself. MailboxFilters can
-// be used to create complex filtering ie return mailboxes which are subscribed
-// and NOT named Inbox
+// See RFC8621, section 4.4.1.
 type FilterCondition struct {
 	// The Mailbox parentId property must match the given value exactly.
 	ParentID jmap.ID `json:"parentId,omitempty"`
