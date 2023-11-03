@@ -5,6 +5,8 @@ import (
 	"git.sr.ht/~rockorager/go-jmap/core"
 )
 
+// Modify push subscription details
+// https://www.rfc-editor.org/rfc/rfc8620.html#section-7.2.2
 type Set struct {
 	Create  map[jmap.ID]*PushSubscription `json:"create,omitempty"`
 	Update  map[jmap.ID]*jmap.Patch       `json:"update,omitempty"`
