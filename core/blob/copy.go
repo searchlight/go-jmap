@@ -5,8 +5,7 @@ import (
 	"git.sr.ht/~rockorager/go-jmap/core"
 )
 
-// Binary data may be copied between two different accounts using the Blob/copy
-// method rather than having to download and then reupload on the client.
+// Copy copies data between accounts
 type Copy struct {
 	// The ID of the account to copy blobs from
 	FromAccount jmap.ID `json:"fromAccountId,omitempty"`

@@ -11,14 +11,9 @@ type Filter interface {
 	implementsFilter()
 }
 
-// Determines the set of Emails returned in the results. If null, all objects
-// in the account of this type are included in the results.
 type FilterOperator struct {
-	// This MUST be one of the following strings: “AND” / “OR” / “NOT”
-	Operator jmap.Operator `json:"operator,omitempty"`
-
-	// The conditions to evaluate against each record.
-	Conditions []Filter `json:"conditions,omitempty"`
+	Operator   jmap.Operator `json:"operator,omitempty"`
+	Conditions []Filter      `json:"conditions,omitempty"`
 }
 
 func (fo *FilterOperator) implementsFilter() {}
