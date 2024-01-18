@@ -71,7 +71,7 @@ func (s *EmailSubmission) MarshalJSON() ([]byte, error) {
 
 type Envelope struct {
 	// The email address to use as the return address in the SMTP submission
-	MailFrom *Address `json:"mailfrom,omitempty"`
+	MailFrom *Address `json:"mailFrom,omitempty"`
 
 	// The email address to send the message to
 	RcptTo []*Address `json:"rcptTo,omitempty"`
