@@ -163,6 +163,19 @@ func (c *Client) Do(req *Request) (*Response, error) {
 // - Blob ID may become invalid after some time if it is unused.
 // - Blob ID is usable only by the uploader until it is used, even for shared accounts.
 func (c *Client) Upload(accountID ID, blob io.Reader) (*UploadResponse, error) {
+	return c.UploadWithContext(context.Background(), accountID, blob)
+}
+
+// UploadWithContext sends binary data to the server and returns blob ID and
+// some associated meta-data.
+//
+// There are some caveats to keep in mind:
+// - Server may return the same blob ID for multiple uploads of the same blob.
+// - Blob ID may become invalid after some time if it is unused.
+// - Blob ID is usable only by the uploader until it is used, even for shared accounts.
+func (c *Client) UploadWithContext(
+	ctx context.Context, accountID ID, blob io.Reader,
+) (*UploadResponse, error) {
 	c.Lock()
 	if c.SessionEndpoint == "" {
 		c.Unlock()
@@ -178,7 +191,7 @@ func (c *Client) Upload(accountID ID, blob io.Reader) (*UploadResponse, error) {
 
 	url := strings.ReplaceAll(c.Session.UploadURL, "{accountId}", string(accountID))
 	c.Unlock()
-	req, err := http.NewRequest("POST", url, blob)
+	req, err := http.NewRequestWithContext(ctx, "POST", url, blob)
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +223,13 @@ func (c *Client) Upload(accountID ID, blob io.Reader) (*UploadResponse, error) {
 
 // Download downloads binary data by its Blob ID from the server.
 func (c *Client) Download(accountID ID, blobID ID) (io.ReadCloser, error) {
+	return c.DownloadWithContext(context.Background(), accountID, blobID)
+}
+
+// DownloadWithContext downloads binary data by its Blob ID from the server.
+func (c *Client) DownloadWithContext(
+	ctx context.Context, accountID ID, blobID ID,
+) (io.ReadCloser, error) {
 	c.Lock()
 	if c.SessionEndpoint == "" {
 		c.Unlock()
@@ -231,7 +251,7 @@ func (c *Client) Download(accountID ID, blobID ID) (io.ReadCloser, error) {
 	)
 	tgtUrl := urlRepl.Replace(c.Session.DownloadURL)
 	c.Unlock()
-	req, err := http.NewRequest("GET", tgtUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", tgtUrl, nil)
 	if err != nil {
 		return nil, err
 	}
