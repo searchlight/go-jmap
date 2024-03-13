@@ -9,7 +9,7 @@ type SortComparator struct {
 
 	Keyword string `json:"keyword,omitempty"`
 
-	IsAscending bool `json:"isAscending,omitempty"`
+	IsAscending bool `json:"isAscending"`
 
 	Collation jmap.CollationAlgo `json:"collation,omitempty"`
 }
