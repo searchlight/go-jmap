@@ -64,8 +64,9 @@ type Email struct {
 	// they appear in the message.
 	//
 	// immutable
-	Headers []*Header `json:"-"`
+	Headers []*Header `json:"headers,omitempty"`
 
+	CustomHeaders []*Header `json:"-,omitempty"`
 	// The value is identical to the value of
 	// header:Message-ID:asMessageIds. For messages conforming to RFC 5322
 	// this will be an array with a single entry.
@@ -265,7 +266,7 @@ func (e *Email) MarshalJSON() ([]byte, error) {
 
 	headerResult := make([]byte, 0)
 	isAppended := false
-	for _, h := range e.Headers {
+	for _, h := range e.CustomHeaders {
 		if isAppended {
 			headerResult = append(headerResult, []byte(",\n")...)
 		}
