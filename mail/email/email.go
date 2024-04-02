@@ -2,6 +2,7 @@ package email
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"git.sr.ht/~rockorager/go-jmap"
@@ -63,10 +64,7 @@ type Email struct {
 	// they appear in the message.
 	//
 	// immutable
-	Headers []*Header `json:"headers,omitempty"`
-
-	// For adding custom headers to the email
-	CustomHeaders []*Header `json:"omitempty"`
+	Headers []*Header `json:"-"`
 
 	// The value is identical to the value of
 	// header:Message-ID:asMessageIds. For messages conforming to RFC 5322
@@ -256,70 +254,33 @@ type AddressGroup struct {
 	Addresses []*mail.Address `json:"addresses,omitempty"`
 }
 
-func (myMail *Email) MarshalJSON() ([]byte, error) {
-	mailMap := make(map[string]interface{})
+type CustomEmail Email
 
-	mailMap["mailboxIds"] = myMail.MailboxIDs
-	mailMap["keywords"] = myMail.Keywords
-	mailMap["from"] = myMail.From
-	mailMap["to"] = myMail.To
-	if myMail.InReplyTo != nil {
-		mailMap["inReplyTo"] = myMail.InReplyTo
-	}
-	if myMail.InReplyTo != nil {
-		mailMap["replyTo"] = myMail.ReplyTo
-	}
-	if myMail.Sender != nil {
-		mailMap["sender"] = myMail.Sender
-	}
-	if myMail.CC != nil {
-		mailMap["cc"] = myMail.CC
-	}
-	if myMail.BCC != nil {
-		mailMap["bcc"] = myMail.BCC
-	}
-	if &myMail.Subject != nil {
-		mailMap["subject"] = myMail.Subject
-	}
-	if myMail.References != nil {
-		mailMap["references"] = myMail.References
-	}
-	if myMail.ReceivedAt != nil {
-		mailMap["receivedAt"] = myMail.ReceivedAt
-	}
-	if myMail.SentAt != nil {
-		mailMap["sentAt"] = myMail.SentAt
-	}
-	if myMail.Headers != nil {
-		mailMap["headers"] = myMail.Headers
-	}
-	if myMail.BodyStructure != nil {
-		mailMap["bodyStructure"] = myMail.BodyStructure
-	}
-	if myMail.BodyValues != nil {
-		mailMap["bodyValues"] = myMail.BodyValues
-	}
-	if myMail.TextBody != nil {
-		mailMap["textBody"] = myMail.TextBody
-	}
-	if myMail.HTMLBody != nil {
-		mailMap["htmlBody"] = myMail.HTMLBody
-	}
-	if myMail.Attachments != nil {
-		mailMap["attachments"] = myMail.Attachments
-	}
-	if &myMail.HasAttachment != nil {
-		mailMap["hasAttachment"] = myMail.HasAttachment
-	}
-	if &myMail.Preview != nil {
-		mailMap["preview"] = myMail.Preview
+func (e *Email) MarshalJSON() ([]byte, error) {
+	ce := (CustomEmail)(*e)
+	result, err := json.Marshal(ce)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, header := range myMail.CustomHeaders {
-		mailMap[header.Name] = header.Value
+	headerResult := make([]byte, 0)
+	isAppended := false
+	for _, h := range e.Headers {
+		if isAppended {
+			headerResult = append(headerResult, []byte(",\n")...)
+		}
+		headerResult = append(headerResult, []byte(fmt.Sprintf("\"%s\":\"%s\"", h.Name, h.Value))...)
+		isAppended = true
 	}
 
-	return json.Marshal(mailMap)
+	if isAppended {
+		result = result[:len(result)-1]
+		result = append(result, []byte(",")...)
+		result = append(result, headerResult...)
+		result = append(result, []byte("}")...)
+	}
+
+	return result, nil
 }
 
 type Header struct {
