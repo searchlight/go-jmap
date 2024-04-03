@@ -66,7 +66,7 @@ type Email struct {
 	// immutable
 	Headers []*Header `json:"headers,omitempty"`
 
-	CustomHeaders []*Header `json:"-,omitempty"`
+	CustomHeaders []*Header `json:"-"`
 	// The value is identical to the value of
 	// header:Message-ID:asMessageIds. For messages conforming to RFC 5322
 	// this will be an array with a single entry.
@@ -257,20 +257,22 @@ type AddressGroup struct {
 
 type CustomEmail Email
 
+// Custom json marshaller for adding custom headers manually
 func (e *Email) MarshalJSON() ([]byte, error) {
 	ce := (CustomEmail)(*e)
 	result, err := json.Marshal(ce)
 	if err != nil {
 		return nil, err
 	}
-
 	headerResult := make([]byte, 0)
 	isAppended := false
+	//fmt.Println(string(result[:]))
+
 	for _, h := range e.CustomHeaders {
 		if isAppended {
 			headerResult = append(headerResult, []byte(",\n")...)
 		}
-		headerResult = append(headerResult, []byte(fmt.Sprintf("\"%s\":\"%s\"", h.Name, h.Value))...)
+		headerResult = append(headerResult, []byte(fmt.Sprintf("\"header:%s:asText\":\"%s\"", h.Name, h.Value))...)
 		isAppended = true
 	}
 
@@ -292,8 +294,6 @@ type Header struct {
 	// The header field value as defined in [@!RFC5322], in Raw form.
 	Value string `json:"value,omitempty"`
 }
-
-type HeaderSlice []*Header
 
 // These properties are derived from the message body [@!RFC5322] and its MIME
 // entities [@RFC2045].

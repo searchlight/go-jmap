@@ -9,13 +9,17 @@ import (
 
 func TestSendEmail(t *testing.T) {
 	myMail, err := NewEmailBuilder().
-		SetSubject("[UNIT TEST] Test Prometheus Alertmanager alert received").
-		SetBodyValue("Test body").
-		SetAttachment(bytes.NewReader([]byte("Test pod logs"))).
-		SetCustomHeader("customHeaderTest", "works").
-		SetCustomHeader("anotherHeader", "works as well").
-		SetRecipient("testuser1.org@mydomain").
+		WithSubject("[UNIT TEST] Test Prometheus Alertmanager alert received").
+		WithBodyValue("Test body").
+		WithAttachment("podLogs.txt", bytes.NewReader([]byte("Test pod logs"))).
+		WithAttachment("podLogs2.txt", bytes.NewReader([]byte("test logs 2"))).
+		WithCustomHeader("customHeaderTest", "works").
+		WithCustomHeader("anotherHeader", "works as well").
+		WithRecipient("testuser1.org@mydomain").
 		Build()
+
+	/*	tmp, _ := myMail.MarshalJSON()
+		fmt.Println(string(tmp[:]))*/
 
 	if err != nil {
 		t.Error("Error creating email ", err)

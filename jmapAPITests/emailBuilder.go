@@ -12,45 +12,41 @@ import (
 
 type emailBuilder struct {
 	recipient, subject, bodyValue string
-	headers                       []*email.Header
-	uploadResponse                *jmap.UploadResponse
+	customHeaders                 []*email.Header
+	attachments                   []*email.BodyPart
 }
 
 func NewEmailBuilder() *emailBuilder {
-	ret := &emailBuilder{}
-	ret.headers = []*email.Header{}
-	return ret
+	return &emailBuilder{}
 }
 
-func (b *emailBuilder) SetSubject(subject string) *emailBuilder {
+func (b *emailBuilder) WithSubject(subject string) *emailBuilder {
 	b.subject = subject
 	return b
 }
 
-func (b *emailBuilder) SetBodyValue(body string) *emailBuilder {
+func (b *emailBuilder) WithBodyValue(body string) *emailBuilder {
 	b.bodyValue = body
 	return b
 }
 
-func (b *emailBuilder) SetRecipient(recipient string) *emailBuilder {
+func (b *emailBuilder) WithRecipient(recipient string) *emailBuilder {
 	b.recipient = recipient
 	return b
 }
 
-func (b *emailBuilder) SetCustomHeader(key string, value string) *emailBuilder {
-	key = "header:" + key + ":asText"
+func (b *emailBuilder) WithCustomHeader(key string, value string) *emailBuilder {
 	customHeader := email.Header{
 		Name:  key,
 		Value: value,
 	}
 
-	b.headers = append(b.headers, &customHeader)
+	b.customHeaders = append(b.customHeaders, &customHeader)
 	return b
 }
 
-func (b *emailBuilder) SetAttachment(blob io.Reader) *emailBuilder {
+func (b *emailBuilder) WithAttachment(attachmentName string, blob io.Reader) *emailBuilder {
 	resp, err := myClient.Upload(userID, blob)
-	b.uploadResponse = nil
 
 	if err != nil {
 		fmt.Println("Error setting attachment ", err.Error())
@@ -62,17 +58,25 @@ func (b *emailBuilder) SetAttachment(blob io.Reader) *emailBuilder {
 		return b
 	}
 
-	b.uploadResponse = resp
+	myAttachment := email.BodyPart{
+		BlobID: resp.ID,
+
+		Size: resp.Size,
+
+		Type: resp.Type,
+
+		Name: attachmentName,
+
+		Disposition: "attachment",
+	}
+
+	b.attachments = append(b.attachments, &myAttachment)
 	return b
 }
 
 func (b *emailBuilder) Build() (email.Email, error) {
 	if b.recipient == "" {
 		return email.Email{}, errors.New("No recipient defined")
-	}
-
-	if b.uploadResponse == nil {
-		return email.Email{}, errors.New("Error setting attachment")
 	}
 
 	from := mail.Address{
@@ -94,20 +98,8 @@ func (b *emailBuilder) Build() (email.Email, error) {
 		Type:   "text/plain",
 	}
 
-	myAttachment := email.BodyPart{
-		BlobID: b.uploadResponse.ID,
-
-		Size: b.uploadResponse.Size,
-
-		Type: b.uploadResponse.Type,
-
-		Name: "pod_Logs.txt",
-
-		Disposition: "attachment",
-	}
-
 	myMail := email.Email{
-		CustomHeaders: b.headers,
+		CustomHeaders: b.customHeaders,
 
 		From: []*mail.Address{
 			&from,
@@ -121,7 +113,7 @@ func (b *emailBuilder) Build() (email.Email, error) {
 
 		Keywords: map[string]bool{"$draft": true},
 
-		MailboxIDs: map[jmap.ID]bool{jmap.ID(draftMailboxID): true},
+		MailboxIDs: map[jmap.ID]bool{draftMailboxID: true},
 
 		BodyValues: map[string]*email.BodyValue{"body": &myBodyValue},
 
@@ -129,7 +121,7 @@ func (b *emailBuilder) Build() (email.Email, error) {
 
 		HasAttachment: true,
 
-		Attachments: []*email.BodyPart{&myAttachment},
+		Attachments: b.attachments,
 	}
 
 	return myMail, nil
